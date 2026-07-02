@@ -125,6 +125,7 @@ if uploaded_file is not None:
                     import spacy
                     #nlp = spacy.load("en_core_web_sm")
                     doc = nlp(extracted_text)
+                    st.text("This uses en_core_web_sm bcz of low end pc")
                     
                     blacklist = ["Aadhar", "Aadhaar", "PAN", "Number", "Employee", "Name", "IFSC", "CONFIDENTIAL"]
                     found_names = set([
