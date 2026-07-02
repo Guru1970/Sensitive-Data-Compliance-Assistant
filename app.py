@@ -354,56 +354,68 @@ if uploaded_file is not None:
                 with col_right:
                     st.subheader("💬 Chat with your Document")
                     
-                    # 1. Initialize conversational message state memory if not present
+                    # 1. Initialize conversational state storage
                     if "chat_history" not in st.session_state:
                         st.session_state.chat_history = []
+
+                    # 2. Add a clear chat helper action
                     if st.button("🗑️ Clear Chat History", use_container_width=True):
                         st.session_state.chat_history = []
                         st.rerun()
-                    # 🔥 UI FIX: Create a fixed-height scrollable window for the history bubbles
-                    # This keeps all the content inside a compact card that scrolls internally!
-                    chat_container = st.container(height=600, border=True)
-                    
-                    # Render previous message logs inside our scrollable box
+                        
+                    st.markdown("---")
+
+                    # 3. Create a fixed-height scrollable window for message history layout
+                    chat_container = st.container(height=400, border=True)
                     with chat_container:
                         for message in st.session_state.chat_history:
                             with st.chat_message(message["role"]):
                                 st.write(message["content"])
-                    
-                    # Look for the section where the chat processes user messages
-                    user_question = st.chat_input("Ask a question about this audited document...")
-                        
+
+                    # 4. Single structural dynamic chat input box
+                    user_question = st.chat_input("Ask a question about this audited document...", key="primary_app_chat_input")
+
                     if user_question:
-                            # 1. Display the user's message in the chat interface
-                        st.chat_message("user").write(user_question)
-                            
-                            # 2. Pull the globally extracted document text explicitly
-                            # Replace 'extracted_text' with the exact name of your text variable if different
-                    context_document = st.session_state.get("extracted_text", "") 
-                            
-                    if not context_document:
-                        st.chat_message("assistant").write("⚠️ Please upload a document first so I have context to analyze!")
-                    else:
-                                # 3. Inject BOTH the context and the question into your Gemini API prompt string
-                        full_prompt = f"""
-                                        You are an enterprise compliance auditor analyzing the following text.
-                                
-                                        ---
-                                        DOCUMENT CONTEXT:
-                                        {context_document}
-                                        ---
-                                
-                                        USER QUESTION:
-                                        {user_question}
-                                
-                                        Provide a concise, professional assessment mapping to compliance regulations (GDPR/DPDP).
-                                        """
-                        response = model.generate_content(full_prompt)
-                        ai_answer = response.text
-                                
-                                # Display AI response inside the scroll container
+                        # Render and record user inquiry instantly
                         with chat_container:
+                            with st.chat_message("user"):
+                                st.write(user_question)
+                        st.session_state.chat_history.append({"role": "user", "content": user_question})
+                        
+                        # 5. Extract contextual payload tracking safely
+                        context_document = st.session_state.get("extracted_text", "").strip()
+                        
+                        if not context_document:
+                            with chat_container:
                                 with st.chat_message("assistant"):
-                                    st.write(ai_answer)
+                                    st.warning("⚠️ Please upload a document first so I have context to analyze!")
+                            st.session_state.chat_history.append({"role": "assistant", "content": "⚠️ Please upload a document first so I have context to analyze!"})
+                        else:
+                            # Structuring strict system instructions to stop hallucinations
+                            chat_prompt = f"""
+                            You are a strict data compliance assistant. Answer the user's question based ONLY on the provided document context.
+                            If the answer cannot be found in the text, say "I cannot find that information in the document."
+                            Note: Sensitive data has been securely redacted with placeholders.
+                            
+                            Document Context:
+                            {context_document}
+                            
+                            User Question: {user_question}
+                            """
+                            
+                            try:
+                                with st.spinner("AI is thinking..."):
+                                    response = model.generate_content(chat_prompt)
+                                    ai_answer = response.text
                                 
-                        st.session_state.chat_history.append({"role": "assistant", "content": ai_answer})
+                                # Render and log assistant response safely inside history loop
+                                with chat_container:
+                                    with st.chat_message("assistant"):
+                                        st.write(ai_answer)
+                                st.session_state.chat_history.append({"role": "assistant", "content": ai_answer})
+                                
+                            except Exception as e:
+                                error_msg = "🛑 API Rate Limit Reached or Quota Exhausted. Please try again in 60 seconds." if "429" in str(e) or "ResourceExhausted" in str(e) else f"⚠️ Connection Error: {str(e)}"
+                                with chat_container:
+                                    with st.chat_message("assistant"):
+                                        st.error(error_msg)
