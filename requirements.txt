@@ -1,6 +1,7 @@
 streamlit
 pandas
 pypdf
+spacy
 pillow
 pytesseract
 pdf2image
