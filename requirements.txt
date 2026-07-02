@@ -1,7 +1,7 @@
 streamlit
 pandas
 pypdf
-spacy==3.8.0
+spacy==3.7.5
 pillow
 pytesseract
 pdf2image
