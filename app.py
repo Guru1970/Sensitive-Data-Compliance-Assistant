@@ -10,13 +10,7 @@ import os
 import subprocess
 import sys
 
-# Ensure spaCy model is downloaded automatically on cloud launch
-try:
-    import spacy
-    nlp = spacy.load("en_core_web_sm")
-except OSError:
-    subprocess.run([sys.executable, "-m", "spacy", "download", "en_core_web_sm"])
-    nlp = spacy.load("en_core_web_sm")
+nlp = spacy.load("en_core_web_sm")
 
 # Set page layout
 st.set_page_config(page_title="Compliance Assistant", layout="wide")
