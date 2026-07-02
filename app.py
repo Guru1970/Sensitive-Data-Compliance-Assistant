@@ -57,6 +57,7 @@ if uploaded_file is not None:
             extracted_text = uploaded_file.getvalue().decode("utf-8")
 
     st.success("File uploaded and read successfully!")
+    st.session_state["extracted_text"] = extracted_text
     
     # Let's prove it works by displaying the extracted text
     with st.expander("👀 Preview Extracted Text"):
