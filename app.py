@@ -1,12 +1,22 @@
 import streamlit as st
 import pandas as pd
 from pypdf import PdfReader
-import os
 import spacy
 import re
 from PIL import Image
 import pytesseract
 from pdf2image import convert_from_bytes
+import os
+import subprocess
+import sys
+
+# Ensure spaCy model is downloaded automatically on cloud launch
+try:
+    import spacy
+    nlp = spacy.load("en_core_web_sm")
+except OSError:
+    subprocess.run([sys.executable, "-m", "spacy", "download", "en_core_web_sm"])
+    nlp = spacy.load("en_core_web_sm")
 
 # Set page layout
 st.set_page_config(page_title="Compliance Assistant", layout="wide")
@@ -119,7 +129,7 @@ if uploaded_file is not None:
 
                     # 📌 3. Statistical NLP tracking with spaCy (For Names and Orgs)
                     import spacy
-                    nlp = spacy.load("en_core_web_sm")
+                    #nlp = spacy.load("en_core_web_sm")
                     doc = nlp(extracted_text)
                     
                     blacklist = ["Aadhar", "Aadhaar", "PAN", "Number", "Employee", "Name", "IFSC", "CONFIDENTIAL"]
