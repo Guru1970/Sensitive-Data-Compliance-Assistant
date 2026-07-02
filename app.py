@@ -294,8 +294,18 @@ if uploaded_file is not None:
                             ### 3️⃣ Suggested Remediation Steps
                             [Provide clear numbered action steps]
                             """
-                            report_response = model.generate_content(report_prompt)
-                            st.info(report_response.text)
+                            # Wrap lines 297-298 inside this try-except block
+                            try:
+                                with st.spinner("Generating executive compliance summary..."):
+                                    report_response = model.generate_content(report_prompt)
+                                    st.info(report_response.text)
+                            except Exception as e:
+                                if "429" in str(e) or "ResourceExhausted" in str(e):
+                                    st.info("💡 **Note:** Executive Compliance Summary generation is temporarily paused due to free tier API rate limits. Please check back in a minute!")
+                                else:
+                                    st.error(f"⚠️ Unable to generate executive overview: {str(e)}")
+                                
+                           
     
     
 # # MODERN 2026 LANGCHAIN IMPORTS (Bypasses langchain.chains entirely)
