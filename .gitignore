@@ -1,0 +1,25 @@
+# Exclude virtual environments (where packages live)
+venv/
+.venv/
+env/
+ENV/
+
+# Exclude Python package distributions and build files
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Exclude caching folders
+_pycache_/
+*.pyc
