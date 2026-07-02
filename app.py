@@ -361,7 +361,7 @@ if uploaded_file is not None:
                         st.rerun()
                     # 🔥 UI FIX: Create a fixed-height scrollable window for the history bubbles
                     # This keeps all the content inside a compact card that scrolls internally!
-                    chat_container = st.container(height=400, border=True)
+                    chat_container = st.container(height=600, border=True)
                     
                     # Render previous message logs inside our scrollable box
                     with chat_container:
@@ -369,35 +369,40 @@ if uploaded_file is not None:
                             with st.chat_message(message["role"]):
                                 st.write(message["content"])
                     
-                    # 2. Dynamic Bottom Chat Input Bar (Now sits stably underneath the scroll box)
+                    # Look for the section where the chat processes user messages
                     user_question = st.chat_input("Ask a question about this audited document...")
-                    
+                        
                     if user_question:
-                        # Display user's question instantly inside the container view
-                        with chat_container:
-                            with st.chat_message("user"):
-                                st.write(user_question)
-                        
-                        st.session_state.chat_history.append({"role": "user", "content": user_question})
-                        
-                        if redacted_text:
-                            with st.spinner("AI is thinking..."):
-                                chat_prompt = f"""
-                                You are a strict data compliance assistant. Answer the user's question based ONLY on the provided document context below.
-                                If the answer cannot be found in the text, say "I cannot find that information in the document."
-                                Note: Sensitive data has been securely redacted with placeholders.
+                            # 1. Display the user's message in the chat interface
+                        st.chat_message("user").write(user_question)
+                            
+                            # 2. Pull the globally extracted document text explicitly
+                            # Replace 'extracted_text' with the exact name of your text variable if different
+                        context_document = st.session_state.get("extracted_text", "") 
+                            
+                        if not context_document:
+                            st.chat_message("assistant").write("⚠️ Please upload a document first so I have context to analyze!")
+                        else:
+                                # 3. Inject BOTH the context and the question into your Gemini API prompt string
+                            full_prompt = f"""
+                                You are an enterprise compliance auditor analyzing the following text.
                                 
-                                Document Context:
-                                {redacted_text}
+                                ---
+                                DOCUMENT CONTEXT:
+                                {context_document}
+                                ---
                                 
-                                User Question: {user_question}
+                                USER QUESTION:
+                                {user_question}
+                                
+                                Provide a concise, professional assessment mapping to compliance regulations (GDPR/DPDP).
                                 """
-                                response = model.generate_content(chat_prompt)
+                                response = model.generate_content(full_prompt)
                                 ai_answer = response.text
                                 
                                 # Display AI response inside the scroll container
-                                with chat_container:
-                                    with st.chat_message("assistant"):
-                                        st.write(ai_answer)
+                            with chat_container:
+                                with st.chat_message("assistant"):
+                                    st.write(ai_answer)
                                 
-                                st.session_state.chat_history.append({"role": "assistant", "content": ai_answer})
+                            st.session_state.chat_history.append({"role": "assistant", "content": ai_answer})
